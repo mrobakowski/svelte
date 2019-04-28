@@ -764,6 +764,15 @@ export default class Component {
 			return `${name.slice(1)}.set(${name})`
 		}
 
+		if (variable && variable.injected) { // possibly reactive declaration
+			// TODO: should we find all of them and concat their deps?
+			// TODO: linear search
+			const reactive_declaration = this.reactive_declarations.find(x => x.assignees.has(name))
+			if (reactive_declaration) {
+				return Array.from(reactive_declaration.dependencies).map(x => this.invalidate(x)).join(", ") + `, $$invalidate('${name}', ${value})`
+			}
+		}
+
 		return `$$invalidate('${name}', ${value})`;
 	}
 
@@ -1006,7 +1015,7 @@ export default class Component {
 									hoistable = false;
 								} else if (!is_hoistable(other_declaration)) {
 									hoistable = false;
-                }
+								}
 							}
 
 							else {
